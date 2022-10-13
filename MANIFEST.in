@@ -1,0 +1,18 @@
+include MANIFEST.in
+include requirements.txt
+include *.json
+include *.md
+include *.py
+include *.txt
+recursive-include bacancy *.css
+recursive-include bacancy *.csv
+recursive-include bacancy *.html
+recursive-include bacancy *.ico
+recursive-include bacancy *.js
+recursive-include bacancy *.json
+recursive-include bacancy *.md
+recursive-include bacancy *.png
+recursive-include bacancy *.py
+recursive-include bacancy *.svg
+recursive-include bacancy *.txt
+recursive-exclude bacancy *.pyc
