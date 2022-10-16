@@ -1,7 +1,0 @@
-## bacancy
-
-bacancy
-
-#### License
-
-MIT
