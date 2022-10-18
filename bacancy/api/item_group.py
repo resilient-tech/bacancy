@@ -36,4 +36,8 @@ def get_all_categories():
     root = get_root_of("Item Group")
     categories = [x.get("value") for x in get_children("Item Group", root)]
 
-    return frappe.get_list("Item Group", filters={"name": ["in", categories]}, fields=["name" ,"pch_sc_item_series"])
+    return frappe.get_list(
+        "Item Group",
+        filters={"name": ["in", categories]},
+        fields=["name", "pch_sc_item_series"],
+    )

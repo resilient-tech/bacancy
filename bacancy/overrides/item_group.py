@@ -1,7 +1,8 @@
 import frappe
 
-from bacancy.api.item_group import get_item_group_properties, is_root
 from frappe.utils.nestedset import get_descendants_of
+from bacancy.api.item_group import get_item_group_properties, is_root
+
 
 def validate(doc, method=None):
     if doc.get("_item_group_properties"):
@@ -24,33 +25,56 @@ def validate(doc, method=None):
 
 def validate_is_group(doc, properties):
     if not doc.is_group and properties.get("is_category"):
-        frappe.throw("Item Group {0} is a category and should be a Group Node.".format(doc.name))
+        frappe.throw(
+            "Item Group {0} is a category and should be a Group Node.".format(doc.name)
+        )
+
 
 def validate_parent_item_group(doc):
     if not doc.parent_item_group:
-        frappe.throw("Parent Item Group is Mandatory Field.", title="Missing Mandatory Field")
+        frappe.throw(
+            "Parent Item Group is Mandatory Field.", title="Missing Mandatory Field"
+        )
 
 
 def validate_item_series(doc, properties):
     if not doc.pch_sc_item_series:
-        frappe.throw("Sub Category Item Series is a Mandatory Field.", title="Missing Mandatory Field")
+        frappe.throw(
+            "Sub Category Item Series is a Mandatory Field.",
+            title="Missing Mandatory Field",
+        )
 
-    if (series := properties.get("category_item_series")) and doc.pch_sc_item_series != series:
-        frappe.throw("Sub Category Item Series should be same as that of Parent {0}.".format(doc.parent_item_group), title="Invalid Item Series")
+    if (
+        series := properties.get("category_item_series")
+    ) and doc.pch_sc_item_series != series:
+        frappe.throw(
+            "Sub Category Item Series should be same as that of Parent {0}.".format(
+                doc.parent_item_group
+            ),
+            title="Invalid Item Series",
+        )
 
-    elif (all_categories := properties.get("all_categories")):
+    elif all_categories := properties.get("all_categories"):
         for category in all_categories:
-            if category.get("pch_sc_item_series") != doc.pch_sc_item_series or category.get("name") == doc.name:
+            if (
+                category.get("pch_sc_item_series") != doc.pch_sc_item_series
+                or category.get("name") == doc.name
+            ):
                 continue
-            
+
             frappe.throw(
-                "Sub Category Item Series should be unique. {0} is already using {1}.".format(category.get("name"), doc.pch_sc_item_series), 
-                title="Invalid Item Series"
+                "Sub Category Item Series should be unique. {0} is already using {1}.".format(
+                    category.get("name"), doc.pch_sc_item_series
+                ),
+                title="Invalid Item Series",
             )
 
-    if (old_series := doc.get_doc_before_save().get("pch_sc_item_series")) and doc.pch_sc_item_series != old_series:
-        frappe.throw("Sub Category Item Series cannot be changed.", title="Validation Error")
-
+    if (
+        old_series := doc.get_doc_before_save().get("pch_sc_item_series")
+    ) and doc.pch_sc_item_series != old_series:
+        frappe.throw(
+            "Sub Category Item Series cannot be changed.", title="Validation Error"
+        )
 
 
 def update_naming_series(item_series):

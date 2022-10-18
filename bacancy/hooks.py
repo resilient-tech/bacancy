@@ -27,7 +27,7 @@ required_apps = ["erpnext"]
 # page_js = {"page" : "public/js/file.js"}
 
 # include js in doctype views
-doctype_js = {"Item Group" : "js/item_group.js"}
+doctype_js = {"Item Group": "js/item_group.js"}
 # doctype_list_js = {"doctype" : "public/js/doctype_list.js"}
 # doctype_tree_js = {"doctype" : "public/js/doctype_tree.js"}
 # doctype_calendar_js = {"doctype" : "public/js/doctype_calendar.js"}
@@ -80,11 +80,7 @@ doctype_js = {"Item Group" : "js/item_group.js"}
 # ---------------
 # Hook on document methods and events
 
-doc_events = {
-	"Item Group": {
-		"validate": "bacancy.overrides.item_group.validate"
-	}
-}
+doc_events = {"Item Group": {"validate": "bacancy.overrides.item_group.validate"}}
 
 # Scheduled Tasks
 # ---------------
