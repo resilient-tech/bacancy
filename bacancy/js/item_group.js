@@ -1,22 +1,43 @@
 frappe.ui.form.on("Item Group", {
-    onload(frm) {
-        if (frm.is_new()) frm.set_df_property("parent_item_group", "reqd", 1);
-        else frm.set_df_property("pch_sc_item_series", "read_only", 1);
-    },
-
     refresh(frm) {
-        if (!frm._item_group_properties?.[frm.doc.name])
-            update_item_group_properties(frm);
+        if (is_root(frm.doc.name)) return;
+        toggle_field_property(frm);
+        delete frm._all_categories;
     },
 
-    parent_item_group: update_item_group_properties,
+    parent_item_group(frm) {
+        if (!frm.is_new()) return;
+        toggle_field_property(frm);
 
-    pch_sc_item_series(frm) {
-        if (!frm.doc.pch_sc_item_series) return;
-        const properties = frm._item_group_properties[frm.doc.name];
+        if (is_category(frm.doc.parent_item_group))
+            frm.set_value("is_group", 1);
+        else
+            frappe.db.get_value(
+                "Item Group",
+                frm.doc.parent_item_group,
+                "pch_sc_item_series",
+                (r) => {
+                    frm.set_value("pch_sc_item_series", r.pch_sc_item_series);
+                }
+            );
+    },
 
-        if (!properties.is_category) return;
-        properties.all_categories.forEach((r) => {
+    async pch_sc_item_series(frm) {
+        if (
+            !frm.is_new() ||
+            !frm.doc.pch_sc_item_series ||
+            !is_category(frm.doc.parent_item_group)
+        )
+            return;
+
+        if (!frm._all_categories) {
+            const { message } = await frappe.call({
+                method: "bacancy.api.item_group.get_all_categories",
+            });
+            frm._all_categories = message;
+        }
+
+        frm._all_categories.forEach((r) => {
             if (r.pch_sc_item_series == frm.doc.pch_sc_item_series)
                 frappe.msgprint(
                     `Item Series already used for ${r.name}.`,
@@ -24,45 +45,25 @@ frappe.ui.form.on("Item Group", {
                 );
         });
     },
-
-    validate(frm) {
-        frm.doc._item_group_properties = frm._item_group_properties;
-    },
 });
 
-async function update_item_group_properties(frm) {
-    if (!frm.doc.parent_item_group) return;
+function toggle_field_property(frm) {
+    const is_cat = is_category(frm.doc.parent_item_group);
+    frm.toggle_reqd("parent_item_group", true);
+    frm.toggle_reqd("pch_sc_item_series", is_cat);
+    frm.toggle_enable(
+        "pch_sc_item_series",
+        is_cat && (frm.is_new() || !frm.doc.pch_sc_item_series)
+    );
 
-    const { message } = await frappe.call({
-        method: "bacancy.api.item_group.get_item_group_properties",
-        args: {
-            doc: frm.doc,
-        },
-    });
-
-    frm._item_group_properties = { [frm.doc.name]: message };
-    update_field_property(frm, message);
+    frm.toggle_enable("is_group", !is_cat);
 }
 
-function update_field_property(frm, properties) {
-    const is_group = frm.get_field("is_group");
-    const item_series = frm.get_field("pch_sc_item_series");
+function is_category(parent_item_group) {
+    if (!parent_item_group) return false;
+    return is_root(parent_item_group);
+}
 
-    if (properties.is_category) {
-        is_group.df.read_only = 1;
-        item_series.df.read_only = 0;
-        item_series.df.reqd = 1;
-        if (frm.is_new()) {
-            item_series.set_value("");
-            is_group.set_value(1);
-        }
-    } else {
-        is_group.df.read_only = 0;
-        item_series.df.read_only = 1;
-        item_series.df.reqd = 0;
-        if (frm.is_new())
-            item_series.set_value(properties.category_item_series);
-    }
-
-    frm.refresh_fields();
+function is_root(item_group) {
+    return item_group === frappe.boot.root_item_group;
 }

@@ -1,18 +1,14 @@
 import frappe
 
 from frappe.utils.nestedset import get_descendants_of
-from bacancy.api.item_group import get_item_group_properties, is_root
+from bacancy.api.item_group import is_root, get_category, get_item_group_properties
 
 
 def validate(doc, method=None):
-    if doc.get("_item_group_properties"):
-        properties = doc._item_group_properties.popitem()[1]
-    else:
-        properties = get_item_group_properties(doc)
-
     if is_root(doc.name):
         return
 
+    properties = get_item_group_properties(doc)
     validate_is_group(doc, properties)
     validate_parent_item_group(doc)
     validate_item_series(doc, properties)
@@ -36,6 +32,15 @@ def validate_parent_item_group(doc):
             "Parent Item Group is Mandatory Field.", title="Missing Mandatory Field"
         )
 
+    # Allow change in parent only if category stays same
+    if _has_value_changed(doc, "parent_item_group") and get_category(
+        doc.parent_item_group
+    ) != get_category(doc.get_doc_before_save().parent_item_group):
+        frappe.throw(
+            "Parent Item Group cannot be changed to have different Category.",
+            title="Validation Error",
+        )
+
 
 def validate_item_series(doc, properties):
     if not doc.pch_sc_item_series:
@@ -44,6 +49,7 @@ def validate_item_series(doc, properties):
             title="Missing Mandatory Field",
         )
 
+    # series should be same as that of category
     if (
         series := properties.get("category_item_series")
     ) and doc.pch_sc_item_series != series:
@@ -54,6 +60,7 @@ def validate_item_series(doc, properties):
             title="Invalid Item Series",
         )
 
+    # series should be unique for new category
     elif all_categories := properties.get("all_categories"):
         for category in all_categories:
             if (
@@ -69,9 +76,8 @@ def validate_item_series(doc, properties):
                 title="Invalid Item Series",
             )
 
-    if (
-        old_series := doc.get_doc_before_save().get("pch_sc_item_series")
-    ) and doc.pch_sc_item_series != old_series:
+    # change of series not allowed
+    if _has_value_changed(doc, "pch_sc_item_series"):
         frappe.throw(
             "Sub Category Item Series cannot be changed.", title="Validation Error"
         )
@@ -89,7 +95,14 @@ def update_naming_series(item_series):
 
 
 def update_all_item_groups(doc):
+    "Helper function to update all decendents when first set."
+
+    if not doc.get_doc_before_save():
+        return
+
     item_groups = get_descendants_of("Item Group", doc.name)
+    if not item_groups:
+        return
 
     item_group_table = frappe.qb.DocType("Item Group")
     (
@@ -98,3 +111,10 @@ def update_all_item_groups(doc):
         .where(item_group_table.name.isin(item_groups))
         .run()
     )
+
+
+def _has_value_changed(doc, field):
+    "Check for change in old value only if already available"
+
+    old = doc.get_doc_before_save()
+    return old.get(field) != doc.get(field) if old and old.get(field) else False

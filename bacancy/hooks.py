@@ -12,6 +12,8 @@ app_email = "pavithramr88@gmail.com"
 app_license = "MIT"
 required_apps = ["erpnext"]
 
+boot_session = "bacancy.boot.set_bootinfo"
+
 # Includes in <head>
 # ------------------
 

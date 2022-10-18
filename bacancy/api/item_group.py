@@ -1,12 +1,14 @@
 import frappe
 
 from frappe.desk.treeview import get_children
-from frappe.utils.nestedset import get_root_of
+from frappe.utils.nestedset import get_root_of, get_ancestors_of
+
+# Developer Note:
+# get_children() is a frappe function that returns the immediate decendents only.
+# get_descendants_of() is a frappe function that returns all decendents of that node.
 
 
-@frappe.whitelist()
 def get_item_group_properties(doc):
-    doc = frappe.parse_json(doc)
     out = {"is_category": is_category(doc.parent_item_group)}
 
     if out["is_category"]:
@@ -32,6 +34,7 @@ def get_category_item_series(item_group):
     return frappe.db.get_value("Item Group", item_group, "pch_sc_item_series")
 
 
+@frappe.whitelist()
 def get_all_categories():
     root = get_root_of("Item Group")
     categories = [x.get("value") for x in get_children("Item Group", root)]
@@ -41,3 +44,13 @@ def get_all_categories():
         filters={"name": ["in", categories]},
         fields=["name", "pch_sc_item_series"],
     )
+
+
+def get_category(item_group):
+    if is_root(item_group):
+        return None
+
+    if is_category(frappe.db.get_value("Item Group", item_group, "parent_item_group")):
+        return item_group
+
+    return get_category(get_ancestors_of("Item Group", item_group)[-2])
