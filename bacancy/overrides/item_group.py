@@ -1,7 +1,11 @@
 import frappe
 
-from frappe.utils.nestedset import get_descendants_of
+from frappe.utils.nestedset import get_root_of, get_descendants_of
 from bacancy.api.item_group import is_root, get_category, get_item_group_properties
+
+
+def onload(doc, method=None):
+    doc.set_onload("root_item_group", get_root_of("Item Group"))
 
 
 def validate(doc, method=None):

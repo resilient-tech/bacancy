@@ -12,7 +12,17 @@ app_email = "pavithramr88@gmail.com"
 app_license = "MIT"
 required_apps = ["erpnext"]
 
-boot_session = "bacancy.boot.set_bootinfo"
+
+doctype_js = {
+    "Item Group": "js/item_group.js",
+}
+
+doc_events = {
+    "Item Group": {
+        "onload": "bacancy.overrides.item_group.onload",
+        "validate": "bacancy.overrides.item_group.validate",
+    },
+}
 
 # Includes in <head>
 # ------------------
@@ -29,7 +39,7 @@ boot_session = "bacancy.boot.set_bootinfo"
 # page_js = {"page" : "public/js/file.js"}
 
 # include js in doctype views
-doctype_js = {"Item Group": "js/item_group.js"}
+# doctype_js = {"doctype" : "public/js/doctype.js"}
 # doctype_list_js = {"doctype" : "public/js/doctype_list.js"}
 # doctype_tree_js = {"doctype" : "public/js/doctype_tree.js"}
 # doctype_calendar_js = {"doctype" : "public/js/doctype_calendar.js"}
@@ -82,7 +92,13 @@ doctype_js = {"Item Group": "js/item_group.js"}
 # ---------------
 # Hook on document methods and events
 
-doc_events = {"Item Group": {"validate": "bacancy.overrides.item_group.validate"}}
+# doc_events = {
+# 	"*": {
+# 		"on_update": "method",
+# 		"on_cancel": "method",
+# 		"on_trash": "method"
+#	}
+# }
 
 # Scheduled Tasks
 # ---------------

@@ -1,15 +1,16 @@
 frappe.ui.form.on("Item Group", {
     refresh(frm) {
-        if (is_root(frm.doc.name)) return;
-        toggle_field_property(frm);
+        if (is_root(frm)) return;
+
+        toggle_field_properties(frm);
         delete frm._all_categories;
     },
 
     parent_item_group(frm) {
         if (!frm.is_new()) return;
-        toggle_field_property(frm);
+        toggle_field_properties(frm);
 
-        if (is_category(frm.doc.parent_item_group))
+        if (is_category(frm))
             frm.set_value("is_group", 1);
         else
             frappe.db.get_value(
@@ -26,7 +27,7 @@ frappe.ui.form.on("Item Group", {
         if (
             !frm.is_new() ||
             !frm.doc.pch_sc_item_series ||
-            !is_category(frm.doc.parent_item_group)
+            !is_category(frm)
         )
             return;
 
@@ -47,23 +48,27 @@ frappe.ui.form.on("Item Group", {
     },
 });
 
-function toggle_field_property(frm) {
-    const is_cat = is_category(frm.doc.parent_item_group);
+function toggle_field_properties(frm) {
+    const is_category = is_category(frm);
     frm.toggle_reqd("parent_item_group", true);
-    frm.toggle_reqd("pch_sc_item_series", is_cat);
+    frm.toggle_reqd("pch_sc_item_series", is_category);
     frm.toggle_enable(
         "pch_sc_item_series",
-        is_cat && (frm.is_new() || !frm.doc.pch_sc_item_series)
+        is_category && (frm.is_new() || !frm.doc.pch_sc_item_series)
     );
 
-    frm.toggle_enable("is_group", !is_cat);
+    frm.toggle_enable("is_group", !is_category);
 }
 
-function is_category(parent_item_group) {
-    if (!parent_item_group) return false;
-    return is_root(parent_item_group);
+function is_category(frm) {
+    const parent_item_group = frm.doc.parent_item_group;
+    return parent_item_group && is_root(frm, parent_item_group);
 }
 
-function is_root(item_group) {
-    return item_group === frappe.boot.root_item_group;
+function is_root(frm, item_group) {
+    if (!item_group) {
+        item_group = frm.doc.name;
+    };
+
+    return item_group === frm.doc.__onload?.root_item_group;
 }
