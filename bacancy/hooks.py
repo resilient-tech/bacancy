@@ -52,7 +52,7 @@ doc_events = {
 
 # website user home page (by Role)
 # role_home_page = {
-# 	"Role": "home_page"
+#	"Role": "home_page"
 # }
 
 # Website user home page (by function)
